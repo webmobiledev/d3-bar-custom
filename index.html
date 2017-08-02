@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>D3 fixed</title>
+	<style>
+
+	body {
+	  font: 10px sans-serif;
+	}
+
+	.axis path,
+	.axis line {
+	  fill: none;
+	  stroke: #000;
+	  shape-rendering: crispEdges;
+	}
+
+	.area {
+	  fill: lightsteelblue;
+	}
+
+	.line {
+	  fill: none;
+	  stroke: steelblue;
+	  stroke-width: 1.5px;
+	}
+
+	.dot {
+	  fill: white;
+	  stroke: steelblue;
+	  stroke-width: 1.5px;
+	}
+	div.tooltip {	
+	    position: absolute;			
+	    text-align: center;			
+	    width: 70px;					
+	    height: 30px;					
+	    padding: 2px;				
+	    font: 24px sans-serif;		
+	    background: yellow;	
+	    border: 0px;		
+	    border-radius: 8px;			
+	    pointer-events: none;			
+	}
+	g text {
+		font-size: 24px;
+	}
+	.x.axis1 .tick:first-child text{
+		display: none;
+	}
+	.x.axis2 .tick:nth-last-child() text{
+		display: none;
+	}
+	</style>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+</head>
+<body>
+	<script src="//d3js.org/d3.v4.0.0-alpha.15.min.js"></script>
+	<script>
+		var scale = 0.8;
+		var jsonData = [{"Year":2011,"Month":"Jan","Sales":320},
+			{"Year":2011,"Month":"Feb","Sales":230},
+			{"Year":2011,"Month":"Mar","Sales":365},
+			{"Year":2011,"Month":"Apr","Sales":385},
+			{"Year":2011,"Month":"May","Sales":300},
+			{"Year":2012,"Month":"Jan","Sales":380},
+			{"Year":2012,"Month":"Feb","Sales":180},
+			{"Year":2012,"Month":"Mar","Sales":275},
+			{"Year":2012,"Month":"Apr","Sales":450},
+			{"Year":2012,"Month":"May","Sales":410},
+			{"Year":2013,"Month":"Jan","Sales":320},
+			{"Year":2013,"Month":"Feb","Sales":170},
+			{"Year":2013,"Month":"Mar","Sales":375},
+			{"Year":2013,"Month":"Apr","Sales":510},
+			{"Year":2013,"Month":"May","Sales":390},
+			{"Year":2014,"Month":"Jan","Sales":420},
+			{"Year":2014,"Month":"Feb","Sales":125},
+			{"Year":2014,"Month":"Mar","Sales":310},
+			{"Year":2014,"Month":"Apr","Sales":450},
+			{"Year":2014,"Month":"May","Sales":410},
+			{"Year":2015,"Month":"Jan","Sales":460},
+			{"Year":2015,"Month":"Feb","Sales":195},
+			{"Year":2015,"Month":"Mar","Sales":360},
+			{"Year":2015,"Month":"Apr","Sales":410},
+			{"Year":2015,"Month":"May","Sales":385}];
+
+		function draw(){
+			var margin = {top: 50, right: 50, bottom: 50, left: 50},
+			    width = $(window).width() - margin.left - margin.right,
+			    height = $(window).height() * scale - margin.top - margin.bottom;
+			var averages = [];
+			var data = getData(jsonData);
+
+			var x = d3.scaleLinear()
+			    .range([0, width]);
+
+			var y = d3.scaleLinear()
+			    .range([height, 0]);
+
+			var line = d3.line()
+			    .defined(function(d) { return d; })
+			    .x(function(d) { return x(d.x); })
+			    .y(function(d) { return y(d.y); });
+
+			var area = d3.area()
+			    .defined(line.defined())
+			    .x(line.x())
+			    .y1(line.y())
+			    .y0(y(0));
+
+			var div = d3.select("body").append("div")	
+			    .attr("class", "tooltip")				
+			    .style("opacity", 0);
+
+			var svg = d3.select("body").append("svg")
+			    .datum(data)
+			    .attr("width", width + margin.left + margin.right)
+			    .attr("height", height + margin.top + margin.bottom)
+			  .append("g")
+			    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+			svg.append("path")
+			    .attr("class", "area")
+			    .attr("d", area);
+
+			svg.append("g")
+				.attr("transform", "translate("+width/12+",0)")
+				.append("text")
+				.text("Jan");
+			svg.append("g")
+				.attr("transform", "translate("+(width/12 + width/5)+",0)")
+				.append("text")
+				.text("Feb");
+			svg.append("g")
+				.attr("transform", "translate("+(width/12 + width*2/5)+",0)")
+				.append("text")
+				.text("March");
+			svg.append("g")
+				.attr("transform", "translate("+(width/12 + width*3/5)+",0)")
+				.append("text")
+				.text("April");
+			svg.append("g")
+				.attr("transform", "translate("+(width/12 + width*4/5)+",0)")
+				.append("text")
+				.text("May");
+
+			var xAxis = svg.append("g")
+			    .attr("class", "x axis")
+			    .attr("transform", "translate(0," + height + ")")
+			    .call(d3.axisBottom(x));
+
+			xAxis.selectAll("text").remove();
+			xAxis.selectAll("g").remove();
+
+			var yAxis = svg.append("g")
+			    .attr("class", "y axis")
+			    .call(d3.axisLeft(y));
+
+			yAxis.selectAll("text").remove();
+			yAxis.selectAll("g").remove();			    
+
+			svg.append("path")
+			    .attr("class", "line")
+			    .attr("d", line)
+			    .attr("stroke-width", 10)
+			    .attr("stroke", "#ccc");
+
+			var yScale = d3.scaleLinear()
+		        .domain([0, 600])
+				.range([height, 0]);
+			var yAxis = svg.append("g")
+			    .attr("class", "y axis1")
+			    .call(d3.axisLeft(yScale).ticks(6));
+
+			var xScale1 = d3.scaleLinear()
+				.range([0, width]);
+			var xAxis1 = svg.append("g")
+			    .attr("class", "x axis2")
+			    .attr("transform", "translate(0," + height + ")")
+			    .call(d3.axisBottom(xScale1)
+			    	.tickFormat(""));
+
+			var circles = svg.selectAll("circle")
+                   .data(data)
+                   .enter()
+                   .append("circle")
+
+			var circleAttributes = circles
+                    .attr("cx", function(d) {
+                   		return d ? d.x * width : null;
+                   	})
+                    .attr("cy", function(d) {
+                   		return d ? height - d.y * height : null;
+                   	})
+                    .attr("r", function(d) {
+                   		return d ? 10 : 0;
+                   	})
+                    .style("fill", "green")
+                   	.on("mouseover", function(d) {
+			            div.transition()		
+			                .duration(300)		
+			                .style("opacity", .9);		
+			            div	.html(parseInt(d.y * 600))	
+			                .style("left", (d3.event.pageX) + "px")		
+			                .style("top", (d3.event.pageY - 28) + "px");	
+			            })					
+			        .on("mouseout", function(d) {		
+			            div.transition()		
+			                .duration(500)		
+			                .style("opacity", 0);	
+			        });		        	        
+			for(var i = 0 ; i < 5 ; i ++){
+		        d3.select("g").append("text")
+		        	.text(11)
+		        	.attr("x", width*i/5 + width/50)
+		        	.attr("y", height + 25);				
+			}
+			for(var i = 0 ; i < 5 ; i ++){
+				if (width < 768) {
+					d3.select("g").append("text")
+			        	.text(15)
+			        	.attr("x", width*i/5 + width*7/50)
+			        	.attr("y", height + 25);						
+				}else{
+					d3.select("g").append("text")
+			        	.text(15)
+			        	.attr("x", width*i/5 + width*4/25)
+			        	.attr("y", height + 25);
+				}				
+			}
+			d3.select("g").append("line")
+	            .attr("x1", width/5)
+	            .attr("x2", width/5)
+	            .attr("y1", 0)
+	            .attr("y2", height)
+	            .attr("stroke", "#ccc")
+	            .attr("stroke-width", 2);
+
+			d3.select("g").append("line")
+	            .attr("x1", width*2/5)
+	            .attr("x2", width*2/5)
+	            .attr("y1", 0)
+	            .attr("y2", height)
+	            .attr("stroke", "#ccc")
+	            .attr("stroke-width", 2);
+
+			d3.select("g").append("line")
+	            .attr("x1", width*3/5)
+	            .attr("x2", width*3/5)
+	            .attr("y1", 0)
+	            .attr("y2", height)
+	            .attr("stroke", "#ccc")
+	            .attr("stroke-width", 2);
+
+			d3.select("g").append("line")
+	            .attr("x1", width*4/5)
+	            .attr("x2", width*4/5)
+	            .attr("y1", 0)
+	            .attr("y2", height)
+	            .attr("stroke", "#ccc")
+	            .attr("stroke-width", 2);                        
+
+			d3.select("g").append("line")
+	            .attr("x1", width*5/5)
+	            .attr("x2", width*5/5)
+	            .attr("y1", 0)
+	            .attr("y2", height)
+	            .attr("stroke", "#ccc")
+	            .attr("stroke-width", 2);
+
+	        //average line
+	        d3.select("g").append("line")
+	            .attr("x1", 0)
+	            .attr("x2", width/5)
+	            .attr("y1", averages[0])
+	            .attr("y2", averages[0])
+	            .attr("stroke", "grey")
+	            .attr("stroke-width", 4);	              
+	        d3.select("g").append("line")
+	            .attr("x1", width/5)
+	            .attr("x2", width*2/5)
+	            .attr("y1", averages[1])
+	            .attr("y2", averages[1])
+	            .attr("stroke", "grey")
+	            .attr("stroke-width", 4);	
+	        d3.select("g").append("line")
+	            .attr("x1", width*2/5)
+	            .attr("x2", width*3/5)
+	            .attr("y1", averages[2])
+	            .attr("y2", averages[2])
+	            .attr("stroke", "grey")
+	            .attr("stroke-width", 4);	
+	        d3.select("g").append("line")
+	            .attr("x1", width*3/5)
+	            .attr("x2", width*4/5)
+	            .attr("y1", averages[3])
+	            .attr("y2", averages[3])
+	            .attr("stroke", "grey")
+	            .attr("stroke-width", 4);	
+	        d3.select("g").append("line")
+	            .attr("x1", width*4/5)
+	            .attr("x2", width*5/5)
+	            .attr("y1", averages[4])
+	            .attr("y2", averages[4])
+	            .attr("stroke", "grey")
+	            .attr("stroke-width", 4);	
+
+			function getData(jsonData){
+				var data = [];
+				var twoData = [[], [], [], [], []];
+				for(var i = 0 ; i < jsonData.length ; i ++){
+					switch(jsonData[i].Month){
+						case "Jan":
+							twoData[0].push(jsonData[i].Sales);
+							break;
+						case "Feb":
+							twoData[1].push(jsonData[i].Sales);
+							break;
+						case "Mar":
+							twoData[2].push(jsonData[i].Sales);
+							break;
+						case "Apr":
+							twoData[3].push(jsonData[i].Sales);
+							break;
+						case "May":
+							twoData[4].push(jsonData[i].Sales);
+							break;
+					}
+				}
+				for(var i = 0 ; i < 5 ; i ++){
+					twoData[i].push(null);
+				}
+				data.push(null);
+				var val = 1/((jsonData.length-1) * 2);
+				for(var i = 0 ; i < 5 ; i ++)
+				{
+					for(var j = 0 ; j < 6 ; j ++)
+					{
+						
+						if (twoData[i][j]) {
+							data.push({x: val, y: twoData[i][j] / 600});
+							val += 1/(jsonData.length + 0.5);
+						} else {
+							data.push(null);
+							val += 1/((jsonData.length + 1) * 10);
+						}
+						
+					}
+				}
+				for(var i = 0 ; i < 5 ; i ++)
+				{
+					averages[i] = height - twoData[i].reduce(sum, 0)*height / 3000;
+				} 
+				return data;
+			}
+			function sum(a, b)
+			{
+				return a+b;
+			}			
+		}
+
+		draw();
+
+		$(window).on("resize", function() {
+			d3.select("svg").remove();
+			if ($(window).width() < 768) {
+				scale = 0.5;
+				draw();
+			} else {
+				scale = 0.8;
+				draw();
+			}
+		});
+
+	</script>
+</body>
+</html>
